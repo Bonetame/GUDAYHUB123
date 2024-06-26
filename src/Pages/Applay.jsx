@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import useAuth from "../Hooks/UseAuth";
 import { useLocation } from "react-router-dom";
+import { format } from "timeago.js";
 import "./css/apply.css";
 
 export default function Apply() {
@@ -14,17 +15,25 @@ export default function Apply() {
 
   const { postid } = location.state || {};
 
+  const [readData, setreadData] = useState([]);
+
   const [freelancerData, setfreelancerData] = useState([]);
   const [applied, setapplied] = useState("");
   const [file, setfile] = useState("");
+
 
   const uploadcv = (e) => {
     setfile(e.target.files[0]);
     console.log(file);
   };
 
-  const alreadyapplied = () => {
-    alert("You have already applied");
+  const alreadyapplied = (applied) => {
+    if(applied === "applied"){
+      alert("You have already applied");
+    }
+    if(applied === "hired")
+      {alert("You have already been hired");}
+    
   };
 
   useEffect(() => {
@@ -51,6 +60,14 @@ export default function Apply() {
   const saveData = async () => {
     try {
       editData(file);
+      if(readData.coverletter === true && inputValue.Coverletter === ""){
+        alert("cover letter is a requirment for this job")
+        return
+      }
+      if (readData.cv === true && (freelancerData.freelancerprofile.cv === "" || freelancerData.freelancerprofile.cv === null)) {
+        alert("CV is a requirement for this job");
+        return;
+      }
       await axios.post("http://localhost:4000/applicant/writeapplicant", {
         Freelancerid: userData.userID,
         postid: readData._id,
@@ -77,6 +94,9 @@ export default function Apply() {
 
           if (data.message === "have applied") {
             setapplied("applied");
+          }
+          if (data.message === "have been hired") {
+            setapplied("hired");
           }
         });
     } catch (error) {
@@ -118,7 +138,7 @@ export default function Apply() {
     }
   };
 
-  const [readData, setreadData] = useState([]);
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -149,6 +169,8 @@ export default function Apply() {
     return `http://localhost:4000/${fileName}`;
   };
 
+
+
   return (
     <>
       <div>
@@ -162,11 +184,11 @@ export default function Apply() {
             <p>Salary: {readData.Salary}</p>
             <p>location: {readData.location}</p>
             <p>Contact: {readData.Contact}</p>
-            <p>PostedDate: {readData.PostedDate}</p>
+            <p>PostedDate: {format( readData.PostedDate)}</p>
             <p>Deadline: {readData.Deadline}</p>
 
-            {applied === "applied" ? (
-              <button className="apply-btn applied" onClick={alreadyapplied}>
+            {applied === "applied" || applied === "hired" ? (
+              <button className="apply-btn applied" onClick={() => alreadyapplied(applied)}>
                 Apply Now
               </button>
             ) : (

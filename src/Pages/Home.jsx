@@ -5,6 +5,8 @@ import { Element } from "react-scroll";
 import fimage5 from "/image/logo.png";
 import useAuth from "../Hooks/UseAuth";
 //import zxcvbn from 'zxcvbn';
+import { useTranslation } from 'react-i18next';
+
 
 const Home = () => {
   const [inputValue, setinputValue] = useState({
@@ -17,23 +19,81 @@ const Home = () => {
     Gender: "",
   });
 
+  const { t } = useTranslation();
   const nullvalue = useState({
     profilepic: null,
     title: null,
     skills: null,
     cv: null,
     additionaldoc: { educations: null, certifications: null },
-    gudayhistory: null,
+    gudayhistory:  { jobs:0, hired:0 },
     workhistory: null,
-    rating: null,
+    rating: 0,
     description: null,
     portfolio: { link: null, title: null },
   });
 
-  let [username, setusername] = useState("");
-  let [password, setpassword] = useState("");
+  const [username, setusername] = useState("");
+  const [password, setpassword] = useState("");
+  const [code,setcode]= useState("")
+  const [codenum,setcodenum] = useState("")
 
+
+
+  const togglePopupcode=()=>{
+    setcode("")
+  }
+
+  const sendcode = async () => {
+    try {
+      await axios.post("http://localhost:4000/user/sendcode", {
+        email: inputValue.Email,
+      });
+      console.log("code sent");
+    } catch (error) {
+      console.log("errorr", error);
+    }
+  };
   const saveData = async () => {
+  
+      try {
+        await axios.post("http://localhost:4000/user/registerUser", {
+          Usertype: inputValue.Usertype,
+          Fullname: inputValue.Fullname,
+          username: inputValue.username,
+          Phonenumber: inputValue.Phonenumber,
+          Email: inputValue.Email,
+          Password: inputValue.Password,
+          Gender: inputValue.Gender,
+          title: "",
+          profilepic: "",
+          code:codenum,
+          nullvalue,
+
+        });
+        console.log("data: ", nullvalue);
+        setPopup(!popup);
+      } catch (error) {
+        if (error.response.status === 400) {
+          if (error.response.data === "User already registered") {
+            alert("User already registered");
+          } else if (error.response.data === "Invalid code") {
+            alert("Invalid code");
+          } else if (error.response.data === "Code has expired") {
+            alert("Code has expired");
+          } else {
+            alert(error.response.data);  // Display other messages as an alert
+          }
+        } else if (error.response.data === "user already registered") {
+            alert("user already registered"); 
+            return
+        }
+        console.log("errorr", error);
+      
+    }
+  };
+
+  const togglecode =()=>{
     const isEmpty = (value) => {
       return (
         value === null ||
@@ -49,33 +109,12 @@ const Home = () => {
     if (hasEmptyProperties) {
       alert("please fillout all of the fileds");
     } else {
-      try {
-        await axios.post("http://localhost:4000/user/registerUser", {
-          Usertype: inputValue.Usertype,
-          Fullname: inputValue.Fullname,
-          username: inputValue.username,
-          Phonenumber: inputValue.Phonenumber,
-          Email: inputValue.Email,
-          Password: inputValue.Password,
-          Gender: inputValue.Gender,
-          title: "",
-          profilepic: "",
-          nullvalue,
-        });
-        console.log("data: ", nullvalue);
-        setPopup(!popup);
-      } catch (error) {
-        if (error.response && error.response.status === 400) {
-            alert(error.response.data.message);
-         
-        if (error.response.data === "user already registered") {
-            alert("user already registered"); 
-            return
-        }}
-        console.log("errorr", error);
-      }
+      sendcode()
+    setcode("active")
+    setPopup(!popup);
+
     }
-  };
+  }
 
   const navigate = useNavigate();
   const { logIn } = useAuth();
@@ -131,20 +170,52 @@ const Home = () => {
     document.body.classList.remove("active-popup");
   }
 
+
+
+
   return (
     <div id="main">
       <Element name="main">
         <section>
           {
             <div className="header-heading">
-              <h2>Connecting Freelancers and Employers</h2>
+              <h2> {t('Connecting Freelancers and Employers')}</h2>
               <h2>
-                <span>By Zagol</span>
+                <span> {t('By Zagol')}</span>
               </h2>
+
+
+              <div className={`code${code}`} >
+                <p>{t('we have sent a code to your email enter the code to register')}</p>
+              <input
+                            className="input"
+                            type="text"
+                            placeholder=""
+                            onChange={(e) => setcodenum(e.target.value)}
+                          /> <br/>
+                            <button className="popup-btn" onClick={saveData}>
+                            {t('Submit')}
+                          </button>
+                        
+                          <button
+                            className="popup-btn"
+                            id="x"
+                            onClick={togglePopupcode}
+                          >
+                            X
+                          </button>
+                          
+                          <a href="#" onClick={togglecode}>
+                          {t('Resend code')}
+                          </a>
+                      
+              </div>
+
+
 
               <div className="header-btns">
                 <button className="header-btn" onClick={togglePopup}>
-                  Register Now
+                  {t('Register Now')}
                 </button>
                 <div className={`wrapper`}>
                   {popup && (
@@ -152,27 +223,27 @@ const Home = () => {
                       <div onClick={togglePopup} className="overlay"></div>
                       <div className={`popup-content${action}`}>
                         <div className="login-popup">
-                          <h3 className="h3-login">LogIn</h3>
+                          <h3 className="h3-login">{t('LogIn')}</h3>
                           <input
                             className="input"
                             type="text"
-                            placeholder="Username"
+                            placeholder={t('Username')}
                             onChange={(e) => setusername(e.target.value)}
                           />
                           <input
                             className="input"
                             type="password"
-                            placeholder="Password"
+                            placeholder={t('Password')}
                             onChange={(e) => setpassword(e.target.value)}
                           />{" "}
                           <br />
                           <button className="popup-btn" onClick={forLogin}>
-                            LogIn
+                            {t('LogIn')}
                           </button>
                           <p>
-                            Don't have an account.{" "}
+                            {t('Dont have an account.')}{" "}
                             <a href="#" onClick={registerLink}>
-                              Register
+                              {t('Register')}
                             </a>
                           </p>
                           <button
@@ -185,7 +256,7 @@ const Home = () => {
                         </div>
                         <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br />{" "}
                         <br />
-                        <h3 className="h3-register">Register</h3>
+                        <h3 className="h3-register">{t('Register')}</h3>
                         <input
                           type="radio"
                           name="user"
@@ -197,7 +268,7 @@ const Home = () => {
                             })
                           }
                         />{" "}
-                        Freelancer
+                        {t('Freelancer')}
                         <input
                           type="radio"
                           name="user"
@@ -209,11 +280,11 @@ const Home = () => {
                             })
                           }
                         />{" "}
-                        Employer <br />
+                         {t('Employer')}<br />
                         <input
                           className="input"
                           type="text"
-                          placeholder="Fullname"
+                          placeholder={t('Fullname')}
                           onChange={(e) =>
                             setinputValue({
                               ...inputValue,
@@ -224,7 +295,7 @@ const Home = () => {
                         <input
                           className="input"
                           type="text"
-                          placeholder="Username"
+                          placeholder={t('Username')}
                           onChange={(e) =>
                             setinputValue({
                               ...inputValue,
@@ -235,7 +306,7 @@ const Home = () => {
                         <input
                           className="input"
                           type="text"
-                          placeholder="Phonenumber"
+                          placeholder={t('Phonenumber')}
                           onChange={(e) =>
                             setinputValue({
                               ...inputValue,
@@ -246,7 +317,7 @@ const Home = () => {
                         <input
                           className="input"
                           type="email"
-                          placeholder="Email"
+                          placeholder={t('Email')}
                           onChange={(e) =>
                             setinputValue({
                               ...inputValue,
@@ -257,7 +328,7 @@ const Home = () => {
                         <input
                           className="input"
                           type="password"
-                          placeholder="Password"
+                          placeholder={t('Password')}
                           onChange={(e) =>
                             setinputValue({
                               ...inputValue,
@@ -278,7 +349,7 @@ const Home = () => {
                             })
                           }
                         />{" "}
-                        Male
+                        {t('Male')}
                         <input
                           className="radio"
                           type="radio"
@@ -291,15 +362,15 @@ const Home = () => {
                             })
                           }
                         />{" "}
-                        Female
+                        {t('Female')}
                         <br /> <br />
-                        <button className="popup-btn" onClick={saveData}>
-                          Submit
+                        <button className="popup-btn" onClick={togglecode}>
+                          {t('Submit')}
                         </button>
                         <p>
-                          Already have an account.{" "}
+                          {t('Already have an account.')}{" "}
                           <a href="#" onClick={loginLink}>
-                            LogIn
+                            {t('LogIn')}
                           </a>
                         </p>
                         <button
@@ -322,15 +393,15 @@ const Home = () => {
         <section>
           {
             <div id="service">
-              <h1>Our Services</h1>
+              <h1>{t('Our Services')}</h1>
               <div className="a-container">
                 <div className="a-box">
                   <div className="a-b-img">
                     <img src= "/image/post.svg" alt="" />
                   </div>
                   <div className="a-b-text">
-                    <h2>post</h2>
-                    <p>Employers can post jobs/tasks</p>
+                    <h2>{t('Post')}</h2>
+                    <p>{t('Employers can post jobs/tasks')}</p>
                   </div>
                 </div>
                 <div className="a-box">
@@ -338,8 +409,8 @@ const Home = () => {
                     <img src= "/image/details.svg" alt="" />
                   </div>
                   <div className="a-b-text">
-                    <h2>apply</h2>
-                    <p>Freelancers can apply on jops of their desier</p>
+                    <h2>{t('Apply')}</h2>
+                    <p>{t('Freelancers can apply on jobs of their desier')}</p>
                   </div>
                 </div>
                 <div className="a-box">
@@ -347,8 +418,8 @@ const Home = () => {
                     <img src= "/image/message.svg" alt="" />
                   </div>
                   <div className="a-b-text">
-                    <h2>messaging</h2>
-                    <p>Direct real time messageing between freelancer and employers</p>
+                    <h2>{t('Messaging')}</h2>
+                    <p>{t('Direct real time messageing between freelancer and employers')}</p>
                   </div>
                 </div>
                 <div className="a-box">
@@ -356,8 +427,8 @@ const Home = () => {
                     <img src= "/image/videocall.svg" alt="" />
                   </div>
                   <div className="a-b-text">
-                    <h2>messaging</h2>
-                    <p>Videochats between freelancers and employers</p>
+                    <h2>{t('Video Chat')}</h2>
+                    <p>{t('Videochats between freelancers and employers')}</p>
                   </div>
                 </div>
               </div>
@@ -373,9 +444,9 @@ const Home = () => {
                 <img src={fimage5} alt="" />
               </div>
               <div className="about-text">
-                <h1>About Us</h1>
-                <p>wooooooooooooooooooo</p>
-                <button>Read More</button>
+                <h1>{t('About Us')}</h1>
+                <p>{t('GUDAYHUB is a ... organization with the aim of addressing the problem of unemployment in Ethiopia by providing a platform for freelancers and employers to meet.The website will provide job opportunities not only for graduates but also for individuals without formal degrees or specific skills, promoting inclusivity and diversity.')}  </p>
+                <button>{t('Read More')}</button>
               </div>
             </div>
           }
@@ -385,12 +456,12 @@ const Home = () => {
         <section>
           {
             <div id="contact">
-              <h1>Contact Us</h1>
+              <h1>{t('Contact Us')}</h1>
               <form>
-                <input type="text" placeholder="Fullname" required />
-                <input type="email" placeholder="Email" required />
-                <textarea placeholder="Write here" name="message"></textarea>
-                <input type="submit" value="Send" />
+                <input type="text" placeholder={t('Fullname')} required />
+                <input type="email" placeholder={t('Email')} required />
+                <textarea placeholder={t('Write here')} name="message"></textarea>
+                <input type="submit" value={t('Send')} />
               </form>
             </div>
           }
@@ -402,7 +473,7 @@ const Home = () => {
             <div>
               <ul class="wrappersocial">
                 <a href="www.facebook.com" class="icon facebook">
-                  <span class="tooltip">Facebook</span>
+                  <span class="tooltip">{t('Facebook')}</span>
                   <svg
                     viewBox="0 0 320 512"
                     height="1.2em"
@@ -413,7 +484,7 @@ const Home = () => {
                   </svg>
                 </a>
                 <a href="www.twitter.com" class="icon twitter">
-                  <span class="tooltip">Twitter</span>
+                  <span class="tooltip">{t('Twitter')}</span>
                   <svg
                     height="1.8em"
                     fill="currentColor"
@@ -425,7 +496,7 @@ const Home = () => {
                   </svg>
                 </a>
                 <a href="www.instagram.com" class="icon instagram">
-                  <span class="tooltip">Instagram</span>
+                  <span class="tooltip">{t('Instagram')}</span>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     height="1.2em"

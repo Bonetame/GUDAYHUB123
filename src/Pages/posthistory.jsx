@@ -19,10 +19,14 @@ export default function Posthistory(){
     useEffect(() => {
       const fetchData = async () => {
         try {
-         await axios.get("http://localhost:4000/post/reademployerpost" ,{
+       const response = await axios.get("http://localhost:4000/post/reademployerpost" ,{
           params: { employerid: userData.userID }
         })
-            .then((Post) => setreadData(Post.data));
+            
+            const sortedData = response.data.sort(
+              (a, b) => new Date(b.PostedDate) - new Date(a.PostedDate)
+            );
+            setreadData(sortedData);
             
         } catch (error) {
           console.error("error", error);
@@ -53,6 +57,10 @@ export default function Posthistory(){
       setArrayIsEmpty(emptyCheck);
     }, [readData]);
 
+    const handlepost = (postid) => {
+      navigate("/employerpage/Applicantsdetails/postdetails", { state: { postid: postid } });
+    };
+
     return(
         <>
          {arrayIsEmpty  ? (
@@ -72,7 +80,7 @@ export default function Posthistory(){
           <h3 className="textf">Description </h3>
           <p className="titlef">{data.Description}</p>
             </div>
-            <button className="btn-job1 more">
+            <button className="btn-job1 more" onClick={() => handlepost(data._id)}>
             Post details</button>
           <button className="btn-job1 more1" onClick={() => handleclick(data._id)}>See applicant</button>
           </>

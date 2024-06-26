@@ -12,22 +12,30 @@
       width: 4rem;
       height: 4rem;
       top: 0;
+      margin-left:2rem;
       z-index: 2;
       transition: 0.6s ease-in-out;
     margin-right: 1rem;
     }
     .profilebox{
+      margin-top: 5rem;
       position: fixed;
         display: flex;
-        right: 0;
+        left: 0;
         z-index: 4;
+        
+      }
+      .morepro{
+        margin-top: 5rem;
+
+        
       }
       .profile-content{
-        width: 430px;
-        height: 580px;
-        border-radius: 20px;
+        width: 400px;
+        height: 600px;
+        border-radius: 10px;
         color: #ffffff;
-        background-color: rgba(14, 13, 13, 0.815);
+        background-color: rgba(13, 32, 34, 0.815);
         box-shadow: 5px 10px 30px rgba(15, 15, 15, 0.918);
         text-align: center;
       }
@@ -40,7 +48,7 @@
       }
       .pholder{
       position: relative;
-      right: -50%;
+      right: -43%;
       width: 4rem;
       height: 4rem;
         border-radius: 50%;
@@ -52,15 +60,21 @@
       .finprofile{
         border: solid  #97fbfb14 ;
         margin: 1rem;
-        height: 50px;
+        height: 85px;
         box-shadow: #97fbfb14  0px 30px 60px -12px inset, #2feeee14 0px 18px 36px -18px inset;
         cursor: pointer;
+      }
+      .complaint{
+        height: 40px;
       }
       .finprofile:hover{
         box-shadow: #97fbfb14  30px 0px 20px -30px inset, #2feeee14 0px -18px 36px 0px inset;
       }
       .finprofile p{
-        top: 50%;
+        text-align: center;
+        color:#b82222  ;
+      }
+      .finprofile h6{
         text-align: center;
         color:#3a8a8abd  ;
       }
@@ -71,5 +85,42 @@
         margin-right: 7rem;
         }
       }
+
+      .interviewlogo{
+        top:10rem;
+        width: 3rem;
+        height: 3rem;
+
+      }
+      .interviewlogo{
+        background-color: #03ecba;
+        overflow: hidden;
+      }
+      .interviewlogo::before{
+         background: linear-gradient(to right, #008728, #007c63);
+      }
+      .interviewlogo::before {
+        content: "";
+        position: absolute;
+        width: 80%;
+        height: 30%;
+        background: linear-gradient(to right, #008728, #007c63);
+        filter: blur(10px);
+        bottom: -3px;
+        z-index: -1;
+        transition-duration: 0.3s;
+      }
+      
+      .interviewlogo:hover::before {
+        bottom: -1px;
+        filter: blur(5px);
+        transition-duration: 0.3s;
+      }
+      .interviewlogo:hover {
+        transform: scale(1.05);
+        transition-duration: 0.3s;
+        overflow: hidden;
+      }
+      
      
     

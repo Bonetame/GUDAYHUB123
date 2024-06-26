@@ -3,6 +3,8 @@ import axios from "axios";
 import useAuth from "../../Hooks/UseAuth";
 import "./css/profile.css";
 import Addprofile from "./Addprofile";
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from "react-router-dom";
 
 export default function Frelancerprofile() {
   const { getUserData, getUserToken } = useAuth();
@@ -12,6 +14,8 @@ export default function Frelancerprofile() {
 
   const [inputValue, setinputValue] = useState({ title: "" });
   const [ShowAddProfile, setShowAddProfile] = useState(false);
+  const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const inputref = useRef(null);
   const [freelancerData, setfreelancerData] = useState({
@@ -136,12 +140,31 @@ export default function Frelancerprofile() {
     document.body.classList.remove("active-popup");
   }
 
+
+  const handleComplaintClick = () => {
+    navigate("/Complaint");
+  };
+  const handleClick = () => {
+    navigate("/Interview");
+};
+
   return (
     <>
+           <div className="holder start-0 interviewlogo">
+          
+            <img
+              onClick={handleClick}
+              className="profilepic "
+              src={`/image/interview5.png`}
+              alt="Profile"
+            />
+     
+        </div>
+
       <div>{ShowAddProfile && <Addprofile prop={freelancerData}
                                           prop2 ={addpro} />}</div>
       <div>
-        <div className="holder end-0">
+        <div className="holder start-0">
           {freelancerData === null ? (
             <img
               onClick={togglePopup}
@@ -197,37 +220,18 @@ export default function Frelancerprofile() {
                   freelancerData.freelancerprofile?.description === null ||
                   freelancerData.freelancerprofile.portfolio?.link === null ? (
                     <div className="finprofile" onClick={addpro}>
-                      <p>Finish creating your profile </p>
+                      <p>{t('Finish creating your profile!!')} </p>
+                      <h6>{t('Not having a finished profile  might affect your cradiability!')} </h6>
                     </div>
                   ) : null)}
-                <input
-                  onChange={(e) =>
-                    setinputValue({ ...inputValue, title: e.target.value })
-                  }
-                  className="input"
-                  type="text"
-                  placeholder="Address"
-                />{" "}
-                <br />
-                CV
-                <input type="file" /> <br />
-                <input
-                  className="radio"
-                  type="radio"
-                  name="gender"
-                  value="male"
-                />{" "}
-                Male
-                <input
-                  className="radio"
-                  type="radio"
-                  name="gender"
-                  value="female"
-                />{" "}
-                Female
+                 
+                  <div className="finprofile complaint" onClick={handleComplaintClick}>
+                      <h6>{t('Complaint')} </h6>
+                    </div>
+              
                 <br /> <br />
                 <button className="popup-btn" onClick={editData}>
-                  Submit
+                  {t('Submit')}
                 </button>
                 <button className="popup-btn" id="x" onClick={togglePopup}>
                   X
