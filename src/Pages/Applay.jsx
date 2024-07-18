@@ -1,70 +1,74 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useNavigate, useLocation } from "react-router-dom";
 import useAuth from "../Hooks/UseAuth";
-import { useLocation } from "react-router-dom";
 import { format } from "timeago.js";
 import "./css/apply.css";
 
 export default function Apply() {
   const { getUserData, getUserToken } = useAuth();
+  const navigate = useNavigate();
 
   const userData = getUserData();
   const token = getUserToken();
 
   const location = useLocation();
-
   const { postid } = location.state || {};
 
-  const [readData, setreadData] = useState([]);
-
-  const [freelancerData, setfreelancerData] = useState([]);
-  const [applied, setapplied] = useState("");
-  const [file, setfile] = useState("");
-
-
-  const uploadcv = (e) => {
-    setfile(e.target.files[0]);
-    console.log(file);
-  };
-
-  const alreadyapplied = (applied) => {
-    if(applied === "applied"){
-      alert("You have already applied");
-    }
-    if(applied === "hired")
-      {alert("You have already been hired");}
-    
-  };
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get(
-          `http://localhost:4000/freelancer/apply/${userData.userID}`
-        );
-        setfreelancerData(response.data);
-      } catch (error) {
-        console.error("freelacer error", error);
-      }
-    };
-    fetchData();
-  }, []);
-
-  const [inputValue, setinputValue] = useState({
+  const [readData, setReadData] = useState([]);
+  const [freelancerData, setFreelancerData] = useState([]);
+  const [applied, setApplied] = useState("");
+  const [file, setFile] = useState("");
+  const [inputValue, setInputValue] = useState({
     Freelancerid: "",
     postid: "",
     Coverletter: "",
     status: "",
   });
+  const [popup, setPopup] = useState(false);
+
+  useEffect(() => {
+    const fetchFreelancerData = async () => {
+      if (userData && userData.userID) {
+        try {
+          const response = await axios.get(
+            `http://localhost:4000/freelancer/apply/${userData.userID}`
+          );
+          setFreelancerData(response.data);
+        } catch (error) {
+          console.error("freelancer error", error);
+        }
+      }
+    };
+    fetchFreelancerData();
+  }, [userData]);
+
+  const uploadcv = (e) => {
+    setFile(e.target.files[0]);
+    console.log(file);
+  };
+
+  const alreadyApplied = (applied) => {
+    if (applied === "applied") {
+      alert("You have already applied");
+    }
+    if (applied === "hired") {
+      alert("You have already been hired");
+    }
+  };
 
   const saveData = async () => {
     try {
       editData(file);
-      if(readData.coverletter === true && inputValue.Coverletter === ""){
-        alert("cover letter is a requirment for this job")
-        return
+      if (readData.coverletter && !inputValue.Coverletter) {
+        alert("Cover letter is a requirement for this job");
+        return;
       }
-      if (readData.cv === true && (freelancerData.freelancerprofile.cv === "" || freelancerData.freelancerprofile.cv === null)) {
+      if (
+        readData.cv &&
+        (!freelancerData.freelancerprofile.cv ||
+          freelancerData.freelancerprofile.cv === "")
+      ) {
         alert("CV is a requirement for this job");
         return;
       }
@@ -76,37 +80,39 @@ export default function Apply() {
       });
       console.log("data: ", inputValue);
       setPopup(!popup);
-      alert("application sent");
+      alert("Application sent");
       fetchData();
     } catch (error) {
-      console.log("errorr", error);
+      console.log("error", error);
     }
   };
 
   const fetchData = async () => {
-    try {
-      await axios
-        .get("http://localhost:4000/applicant/searchapplied", {
-          params: { postid: postid, freelancerid: userData.userID },
-        })
-        .then((response) => {
-          const data = response.data;
+    if (userData && userData.userID) {
+      try {
+        const response = await axios.get(
+          "http://localhost:4000/applicant/searchapplied",
+          {
+            params: { postid: postid, freelancerid: userData.userID },
+          }
+        );
+        const data = response.data;
 
-          if (data.message === "have applied") {
-            setapplied("applied");
-          }
-          if (data.message === "have been hired") {
-            setapplied("hired");
-          }
-        });
-    } catch (error) {
-      console.error("error", error);
+        if (data.message === "have applied") {
+          setApplied("applied");
+        }
+        if (data.message === "have been hired") {
+          setApplied("hired");
+        }
+      } catch (error) {
+        console.error("error", error);
+      }
     }
   };
 
   useEffect(() => {
     fetchData();
-  }, [postid, userData.userID]);
+  }, [postid, userData]);
 
   function isFormDataEmpty(formData) {
     for (let pair of formData.entries()) {
@@ -133,62 +139,100 @@ export default function Apply() {
           }
         );
       } catch (error) {
-        console.error("errorr", error);
+        console.error("error", error);
       }
     }
   };
 
 
-
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchPostData = async () => {
       try {
         const response = await axios.get(
           `http://localhost:4000/post/searchpost/${postid}`
         );
-        setreadData(response.data);
+        setReadData(response.data);
       } catch (error) {
         console.error("error", error);
       }
     };
-    fetchData();
-  }, []);
-
-  const [popup, setPopup] = useState(false);
+    fetchPostData();
+  }, [postid]);
 
   const togglePopup = () => {
-    setPopup(!popup);
+    if (!userData) {
+      navigate("/login");
+    } else {
+      setPopup(!popup);
+    }
   };
 
-  if (popup) {
-    document.body.classList.add("active-popup");
-  } else {
-    document.body.classList.remove("active-popup");
-  }
   const getProfilePicUrl = (fileName) => {
     return `http://localhost:4000/${fileName}`;
   };
 
-
-
   return (
     <>
-      <div>
+      <div className="applaywhole ">
         {readData && (
           <div>
-            <h2> {readData.JobTask}</h2>
-            <h2>Job Type: {readData.Jobtype}</h2>
-            <p>Job Title: {readData.Jobtitle}</p>
-            <p>Description: {readData.Description}</p>
-            <p>Qualification: {readData.Qualification}</p>
-            <p>Salary: {readData.Salary}</p>
-            <p>location: {readData.location}</p>
-            <p>Contact: {readData.Contact}</p>
-            <p>PostedDate: {format( readData.PostedDate)}</p>
-            <p>Deadline: {readData.Deadline}</p>
+            <h1 className="title">{readData.Jobtitle}</h1>
+            <br />
+            <div className=" row">
+              <div className=" leftone col-5">
+                <h2> {readData.JobTask}</h2>
+                <h2>{readData.Jobtype}</h2>
+                <div className="onebyone">
+                  <h3>Description</h3>
+                  <p>{readData.Description}</p>
+                </div>
 
+                <div className="oneby"></div>
+                <h3>Qualification</h3>
+                {readData.Qualification && (
+                  <ul>
+                    {readData.Qualification.split(",").map((item, index) => (
+                      <li key={index}>{item.trim()}</li>
+                    ))}
+                  </ul>
+                )}
+
+                <p>Salary: {readData.Salary}</p>
+                <p>Location: {readData.location}</p>
+                <p>Contact: {readData.Contact}</p>
+                <p>Posted Date: {format(readData.PostedDate)}</p>
+                <p>Deadline: {readData.Deadline}</p>
+              </div>
+
+              <div className="sideline col-3">
+           <h4>Requirements to apply</h4><br/>
+                <div className="by"></div><br/>
+                <div className="typewhole">
+                <h5>CV:</h5>
+
+                {readData.cv ? 
+                <p style={{marginTop:".5rem", marginLeft:"1rem",color:"#830000"}}>Required</p>
+              :<p style={{marginTop:".5rem", marginLeft:"1rem",color:"#1c8300"}}> Not Required</p>}
+                </div>
+                <div className="typewhole">
+                <h5>Cover Letter:</h5>
+
+                {readData.coverletter ? 
+                <p style={{marginTop:".5rem", marginLeft:"1rem",color:"#830000"}}>Required</p>
+              :<p style={{marginTop:".5rem", marginLeft:"1rem",color:"#1c8300"}}> Not Required</p>}
+                </div>
+
+                {readData.urgency ? 
+                <p style={{marginTop:".5rem", marginLeft:"1rem",color:"#830000"}}>Urgent</p>
+              :null}
+              </div>
+
+            </div>
             {applied === "applied" || applied === "hired" ? (
-              <button className="apply-btn applied" onClick={() => alreadyapplied(applied)}>
+              <button
+                className="apply-btn applied"
+                onClick={() => alreadyApplied(applied)}
+              >
                 Apply Now
               </button>
             ) : (
@@ -232,7 +276,7 @@ export default function Apply() {
                       placeholder="Address"
                     />{" "}
                     <br />
-                    Your cv
+                    Your CV
                     {freelancerData.freelancerprofile.cv ? (
                       <div className="">
                         <a
@@ -249,7 +293,7 @@ export default function Apply() {
                         </a>
                       </div>
                     ) : null}
-                    change CV
+                    Change CV
                     <input type="file" onChange={uploadcv} /> <br />
                     Cover Letter
                     <input
@@ -258,7 +302,7 @@ export default function Apply() {
                       placeholder="coverletter"
                       value={inputValue.Coverletter}
                       onChange={(e) =>
-                        setinputValue({
+                        setInputValue({
                           ...inputValue,
                           Coverletter: e.target.value,
                         })

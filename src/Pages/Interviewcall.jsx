@@ -1,15 +1,16 @@
-import { CopyToClipboard } from "react-copy-to-clipboard";
-import { io } from "socket.io-client";
-import { useEffect, useState, useRef } from "react";
-import useAuth from "../Hooks/UseAuth";
+import { useEffect, useState, useRef } from 'react';
+import { io } from 'socket.io-client';
+import useAuth from '../Hooks/UseAuth';
 import React from 'react';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import TextField from '@mui/material/TextField';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import PhoneIcon from '@mui/icons-material/Phone';
+import { CopyToClipboard } from "react-copy-to-clipboard";
+import ReactPlayer from "react-player";
 
-const socket = io.connect("ws://localhost:4100");
+const socket = io.connect('ws://localhost:4100');
 
 export default function InterviewCall() {
     const { getUserData, getUserToken } = useAuth();
@@ -17,16 +18,17 @@ export default function InterviewCall() {
     const userData = getUserData();
     const token = getUserToken();
 
-    const [me, setMe] = useState("");
+    const [me, setMe] = useState('');
     const [stream, setStream] = useState(null);
     const [receivingCall, setReceivingCall] = useState(false);
-    const [caller, setCaller] = useState("");
+    const [caller, setCaller] = useState('');
     const [callerSignal, setCallerSignal] = useState(null);
     const [callAccepted, setCallAccepted] = useState(false);
-    const [idToCall, setIdToCall] = useState("");
+    const [idToCall, setIdToCall] = useState('');
     const [callEnded, setCallEnded] = useState(false);
-    const [name, setName] = useState("");
+    const [name, setName] = useState('');
     const [remoteStream, setRemoteStream] = useState(null);
+    const [userVideoSrc, setUserVideoSrc] = useState('');
 
     const myVideo = useRef();
     const userVideo = useRef();
@@ -36,94 +38,108 @@ export default function InterviewCall() {
         // Set up local video stream
         navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
             setStream(stream);
-            if (myVideo.current) {
-                myVideo.current.srcObject = stream;
-            }
+          
         });
 
         // Receive socket ID from server
-        socket.on("me", (id) => {
+        socket.on('me', (id) => {
             setMe(id);
         });
 
         // Handle incoming call
-        socket.on("callUser", (data) => {
+        socket.on('callUser', (data) => {
             setReceivingCall(true);
             setCaller(data.from);
             setName(data.name);
             setCallerSignal(data.signal);
         });
+
+        // Handle incoming tracks from remote peer
+        peerConnection.current.ontrack = (event) => {
+            if (event.streams && event.streams[0]) {
+                setRemoteStream(event.streams[0]);
+                console.log(event.streams[0])
+            }
+        };
+
     }, []);
 
-   
-
+    // Set remote stream to userVideoSrc when it changes
     useEffect(() => {
-        if (userVideo.current) {
-            userVideo.current.srcObject = remoteStream;
+        if (remoteStream) {
+            const videoSrc = URL.createObjectURL(remoteStream);
+            setUserVideoSrc(videoSrc);
         }
     }, [remoteStream]);
 
     const callUser = async (id) => {
-        const offer = await peerConnection.current.createOffer();
-        await peerConnection.current.setLocalDescription(offer);
+        try {
+            const offer = await peerConnection.current.createOffer();
+            await peerConnection.current.setLocalDescription(offer);
 
-        socket.emit("callUser", {
-            userToCall: id,
-            signalData: offer,
-            from: me,
-            name: name
-        });
+            socket.emit('callUser', {
+                userToCall: id,
+                signalData: offer,
+                from: me,
+                name: name,
+            });
 
-        socket.on("callAccepted", async (signal) => {
-            setCallAccepted(true);
-            const remoteDesc = new RTCSessionDescription(signal);
-            await peerConnection.current.setRemoteDescription(remoteDesc);
-        });
+            socket.on('callAccepted', async (signal) => {
+                setCallAccepted(true);
+                const remoteDesc = new RTCSessionDescription(signal);
+                await peerConnection.current.setRemoteDescription(remoteDesc);
+            });
+        } catch (error) {
+            console.error('Error creating or setting local description:', error);
+        }
     };
 
     const answerCall = async () => {
-        setCallAccepted(true);
+        try {
+            setCallAccepted(true);
 
-        const remoteDesc = new RTCSessionDescription(callerSignal);
-        await peerConnection.current.setRemoteDescription(remoteDesc);
+            const remoteDesc = new RTCSessionDescription(callerSignal);
+            await peerConnection.current.setRemoteDescription(remoteDesc);
 
-        const answer = await peerConnection.current.createAnswer();
-        await peerConnection.current.setLocalDescription(answer);
+            const answer = await peerConnection.current.createAnswer();
+            await peerConnection.current.setLocalDescription(answer);
 
-        socket.emit("answerCall", { signal: answer, to: caller });
+            socket.emit('answerCall', { signal: answer, to: caller });
+        } catch (error) {
+            console.error('Error answering call:', error);
+        }
     };
 
     const leaveCall = () => {
         setCallEnded(true);
-        peerConnection.current.close();
-        setRemoteStream(null);
-    };
-
-    useEffect(() => {
         if (stream) {
-            stream.getTracks().forEach(track => {
-                peerConnection.current.addTrack(track, stream);
-            });
-
-            peerConnection.current.ontrack = (event) => {
-                const [remoteStream] = event.streams;
-                setRemoteStream(remoteStream);
-            };
+            stream.getTracks().forEach((track) => track.stop());
         }
-    }, [stream]);
- 
+        if (peerConnection.current) {
+            peerConnection.current.close();
+        }
+        if (socket.connected) {
+            socket.disconnect();
+        }
+    };
+    console.log("my",stream)
+    console.log("other",remoteStream)
+
     return (
         <>
-            <h1 style={{ textAlign: "center", color: '#fff' }}>Zoomish</h1>
+            <h1 style={{ textAlign: 'center', color: '#fff' }}>Zoomish</h1>
             <div className="container">
                 <div className="video-container">
                     <div className="video">
-                        {stream && <video playsInline muted ref={myVideo} autoPlay style={{ width: "300px" }} />}
+                        {stream &&  <ReactPlayer url={stream} playing muted autoPlay style={{ width: '300px' }}/> }
                     </div>
                     <div className="video">
-                        {callAccepted && !callEnded ?
-                            <video playsInline ref={userVideo} autoPlay style={{ width: "300px" }} /> :
-                            null}
+                        {callAccepted && !callEnded ? (
+                             <ReactPlayer url={remoteStream} playing muted autoPlay style={{ width: '300px' }}/> 
+                        ) : null}
+                        {callAccepted && !callEnded && userVideoSrc && (
+                             <ReactPlayer url={remoteStream} playing muted autoPlay style={{ width: '300px' }}/> 
+                        )}
                     </div>
                 </div>
                 <div className="myId">
@@ -133,9 +149,9 @@ export default function InterviewCall() {
                         variant="filled"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        style={{ marginBottom: "20px" }}
+                        style={{ marginBottom: '20px' }}
                     />
-                    <CopyToClipboard text={me} style={{ marginBottom: "2rem" }}>
+                    <CopyToClipboard text={me} style={{ marginBottom: '2rem' }}>
                         <Button variant="contained" color="primary" startIcon={<AssignmentIcon fontSize="large" />}>
                             Copy ID
                         </Button>
@@ -158,7 +174,6 @@ export default function InterviewCall() {
                                 <PhoneIcon fontSize="large" />
                             </IconButton>
                         )}
-                        {idToCall}
                     </div>
                 </div>
                 <div>

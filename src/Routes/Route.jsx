@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import Home from "../Pages/Home";
 import Layout from "../Layouts/Layout";
 import Freelancerpage from "../Pages/FreelancerPage";
@@ -21,6 +21,11 @@ import RoomPage from "../Pages/room";
 import InterviewCall from "../Pages/Interviewcall";
 import { SocketProvider } from "../provider/socket";
 import { PeerProvider } from "../provider/peer";
+import Joblist from "../components/Freelancer/JobList";
+import Freelancerlist from "../components/employer/freelancerlist";
+import Testimony from "../assets/testimony";
+import Register from "../assets/register";
+import useAuth from "../Hooks/UseAuth";
 
 const AppRoutes = () => {
   const location = useLocation();
@@ -28,8 +33,11 @@ const AppRoutes = () => {
   const showFooter = [
     location.pathname !== "/",
     location.pathname !== "/Messenger",
+    location.pathname !== "/InterviewCalls",
+    location.pathname !== "/Register",
   ];
-
+  const { isLoggedIn } = useAuth();
+  const isAuthenticated = isLoggedIn();
   return (
     <>
       <SocketProvider>
@@ -38,6 +46,17 @@ const AppRoutes = () => {
             <Route path="/" element={<Layout />}>
               <Route index element={<Home />} />
               <Route path="/" element={<Home />} />
+              <Route path="/joblist" element={<Joblist />} />
+              <Route path="/joblist/apply" element={<Apply />} />
+              <Route path="/freelancerlist" element={<Freelancerlist />} />
+              <Route
+                path="/freelancerlist/Freelancerdetails"
+                element={<Freelancerdetails />}
+              />
+               <Route
+                path="/Register"
+                element={<Register />}
+              />
               <Route
                 path="/freelancerpage"
                 element={<PrivateRoute element={<Freelancerpage />} />}
@@ -108,9 +127,13 @@ const AppRoutes = () => {
                 path="/complaint"
                 element={<PrivateRoute element={<Complaint />} />}
               />
+              <Route
+                path="/Testimony"
+                element={<PrivateRoute element={<Testimony />} />}
+              />
             </Route>
           </Routes>
-          {showFooter && <Footer />}
+          {showFooter.every(Boolean) && <Footer />}
         </PeerProvider>
       </SocketProvider>
     </>

@@ -27,6 +27,8 @@ const Navbar = () => {
           case "/Interview":
           case "/room/:roomId":
       case "/employerpage/Freelancerdetails":
+        case "/freelancerlist/Freelancerdetails":
+          case "/joblist/apply":
         setshowNav(false);
         break;
       default:
@@ -118,14 +120,32 @@ const Navbar = () => {
                 {t("Home")}
               </Link>
             </li>
-            <li>
+            <div className="drop">
+            <li className="serv">
               <Link to="service" smooth={true} duration={500}>
                 {t("Service")}
               </Link>
             </li>
+           
+            <li className="item">
+              <RouterLink to="/joblist">
+                {t("Job List")}
+              </RouterLink>
+            </li>
+            <li className="item otheritem">
+              <RouterLink to="/freelancerlist">
+                {t("Freelancer")}
+              </RouterLink>
+            </li>
+            </div>
             <li>
               <Link to="about" smooth={true} duration={500}>
                 {t("About")}
+              </Link>
+            </li>
+            <li>
+              <Link to="testimony" smooth={true} duration={500}>
+                {t("Testimony")}
               </Link>
             </li>
             <li>
@@ -133,11 +153,7 @@ const Navbar = () => {
                 {t("Contact")}
               </Link>
             </li>
-            <li>
-              <Link to="register" smooth={true} duration={500}>
-                {t("Register")}
-              </Link>
-            </li>
+          
             <LanguageSwitcher />
           </>
         );
@@ -150,7 +166,7 @@ const Navbar = () => {
     <>
       {shownav && (
         <nav className={nav ? "nav active" : "nav"}>
-          <RouterLink to="main" className="logo">
+          <RouterLink to="" className="logo">
             <img src="/image/logo.png" alt="" />
           </RouterLink>
           <input className="menu-btn" type="checkbox" id="menu-btn" />
