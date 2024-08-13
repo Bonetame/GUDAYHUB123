@@ -4,6 +4,7 @@ import { useLocation,useNavigate } from "react-router-dom";
 import "./css/freelancerdetails.css";
 import { useTranslation } from 'react-i18next';
 import useAuth from "../../Hooks/UseAuth";
+import PortfolioSlider from "../../assets/portfolio";
 
 export default function Freelancerdetails() {
   const { getUserData, getUserToken } = useAuth();
@@ -46,8 +47,23 @@ export default function Freelancerdetails() {
     freelancerid: "",
     employerid: "",
   });
+  const [showWork, setshowWork] = useState(true);
+  const [showPortfolio, setshowportfolio] = useState(false);
 
+  const work = ()=>{
+    if(!showWork)
+    setshowWork(!showWork)
+    if(showPortfolio){
+      setshowportfolio(!showPortfolio)
+    }
+  }
 
+  const portfolio = ()=>{
+    if(!showPortfolio)
+    setshowportfolio(!showPortfolio)
+    if(showWork)
+      setshowWork(!showWork)
+  }
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -55,7 +71,6 @@ export default function Freelancerdetails() {
           `http://localhost:4000/employer/freelancerdetail/${userid}`
         );
         setreadData(response.data);
-        console.log(response.data.freelancerprofile.title);
       } catch (error) {
         console.error("error", error);
       }
@@ -67,11 +82,18 @@ export default function Freelancerdetails() {
 
   const togglePopup = () => {
     if (!userData) {
+      const redirectData = {
+        pathname: "/employerpage/Freelancerdetails",
+        state: location.state,
+      };
+      sessionStorage.setItem("redirectDataEmployer", JSON.stringify(redirectData));
+
       navigate("/login");
     } else {
     setPopup(!popup);
     }
   };
+
 
   if (popup) {
     document.body.classList.add("active-popup");
@@ -148,8 +170,6 @@ export default function Freelancerdetails() {
     }
   };
 
-
-
   return (
     <>
     <div className="full-page">
@@ -190,25 +210,74 @@ export default function Freelancerdetails() {
           </div>
         )}
       </div>
-      <button className="chat-btn" onClick={togglePopup}>
-               offer
-            </button>
+      {!userData &&(
+       <button className="chat-btn" onClick={togglePopup}>
+       offer
+    </button> 
+      )}
+      {userData && userData.UserType === "employer" ? 
+       <button className="chat-btn" onClick={togglePopup}>
+       offer
+    </button>: null}
+     
       <div className="full-info">
       <div className="radio-inputs">
-  <label className="radio">
+  <label className="radio" >
     <input type="radio" name="radio" />
-    <span className="name h">Work History</span>
+    <span className="name h" onClick={work}>Work History</span>
   </label>
   <label className="radio">
     <input type="radio" name="radio" />
-    <span className="name r">Porfolio</span>
+    <span className="name r"  onClick={portfolio}>Porfolio Images</span>
   </label>
 
   <label className="radio">
     <input type="radio" name="radio" />
-    <span className="name v">Vue</span>
+    <span className="name v">Other Porfolio</span>
   </label>
 </div>
+
+{showWork && 
+(readData.freelancerprofile.workhistory ? (
+  <>
+   
+	<ol className="olcards ">
+  {readData.freelancerprofile.workhistory.map((data, index) => (
+    <>
+		
+		<li className="workcard">
+			<div className="content">
+				<div className="title num ">{index+1}</div>
+				<div className="text work">{data}</div>
+			</div>
+		</li>
+ 
+    </>
+    ))}
+	</ol>
+
+  </>
+):(
+  <>
+
+  <ol className="olcards ">
+ 
+		<li className="workcard">
+			<div className="content">
+				
+				<div className="text work">No work History</div>
+			</div>
+		</li>
+	</ol>
+  </>
+))}
+
+{showPortfolio && (
+ <>
+
+<PortfolioSlider />
+
+ </>)}
       </div>
       </div>
 
