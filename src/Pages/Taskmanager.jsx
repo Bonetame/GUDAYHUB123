@@ -5,7 +5,9 @@ import "./css/taskmanager.css";
 import { useWindowSize } from "@uidotdev/usehooks";
 import Confetti from "react-confetti";
 import { Pie } from "react-chartjs-2";
+import Frelancerprofile from "../components/Freelancer/FrelancerProfile";
 import { Chart, registerables } from "chart.js";
+import AlertPopup from "../assets/AlertPopup";
 
 Chart.register(...registerables);
 
@@ -24,7 +26,13 @@ export default function Taskmanager() {
   const [hiredIsEmpty, setHiredIsEmpty] = useState(false);
   const [hired, setHired] = useState(false);
   const { width, height } = useWindowSize();
-  const confettiDuration = 1000;
+  const confettiDuration = 600;
+
+  const [isPopupAlertVisible, setIsPopupAlertVisible] = useState("");
+
+  const handleClose = () => {
+    setIsPopupAlertVisible("");
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -67,10 +75,11 @@ export default function Taskmanager() {
         axios.put(`http://localhost:4000/applicant/changehirestatus`, null, {
           params: { status: "hired", applicantid: hiredApplicant._id }
         })
-          .then(() => window.location.reload())
+          .then(() => 
+            setIsPopupAlertVisible('Congratulations! You have been hired.') )
           .catch(error => {
             console.error("Error adding hired:", error);
-            alert("Error adding hired");
+            setIsPopupAlertVisible("Error adding hired");
           });
       }, confettiDuration);
     }
@@ -118,7 +127,7 @@ export default function Taskmanager() {
 
   return (
     <>
-    
+      <Frelancerprofile />
       <div className="wholeTask">
         <Confetti
           width={width}
@@ -130,13 +139,13 @@ export default function Taskmanager() {
         <div className="main">
 <section id="applications">
         {arrayIsEmpty ? (
-          <div className="taskblock">You have not applied to any job or task yet</div>
+          <div className="taskblock catagory">You have not applied to any job or task yet</div>
         ) : (
           <>
-            <div className="taskblock">You have {dataLen} current application{dataLen > 1 ? 's' : ''}</div>
+            <div className="taskblock catagory">You have {dataLen} current application{dataLen > 1 ? 's' : ''}</div>
             <div className="container">
               {readData.map((data, index) => (
-                <div className="applylist" key={data.postid}>
+                <div className="applylist catagory" key={data.postid}>
                   {readDataPostTitles[index] && (
                     <>
                       <h3 className="textf">Job title</h3>
@@ -155,13 +164,13 @@ export default function Taskmanager() {
 </section>
 <section id="hired">
         {hiredIsEmpty ? (
-          <div className="taskblock">You have not gotten any job in GudayHub</div>
+          <div className="taskblock catagory">You have not gotten any job in GudayHub</div>
         ) : (
           <>
-            <div className="taskblock ">You have gotten {hiredLen} job{hiredLen > 1 ? 's' : ''} in GudayHub</div>
+            <div className="taskblock catagory">You have gotten {hiredLen} job{hiredLen > 1 ? 's' : ''} in GudayHub</div>
             <div className="container ">
               {readHired.map((data, index) => (
-                <div className="applylist" key={data.postid}>
+                <div className="applylist catagory" key={data.postid}>
                   {readHiredPostTitles[index] && (
                     <>
                       <h3 className="textf">Job title</h3>
@@ -221,8 +230,10 @@ export default function Taskmanager() {
         </div>
         <div className="sidetask">
         <section>
+        <div style={{paddingTop:"6rem"}}>
           <div className="bubles app"><a href="#applications"><p>Applications: {readHired.length + readData.length}</p></a></div>
           <div className="bubles hire"><a href="#hired"><p>Hired: {readHired.length}</p></a></div>
+          </div>
  <h4>Application Status </h4>
         <div className="report-section">
           <div></div>
@@ -232,6 +243,13 @@ export default function Taskmanager() {
         </div>
 
       </div>
+
+      {isPopupAlertVisible != "" && (
+        <AlertPopup
+          message = {isPopupAlertVisible}
+          onClose={handleClose}
+        />
+      )}
     </>
   );
 }
